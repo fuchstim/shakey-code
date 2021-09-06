@@ -1,37 +1,36 @@
+import Jimp from 'jimp';
+import sharp from 'sharp';
 
-const path = require('path');
-const Jimp = require('jimp');
-const sharp = require('sharp');
+import baseImageSource from '../assets/base.png';
+import utils from '../utils'
 
-const utils = require('../utils');
+import filter from './_filter'
 
-const filter = require('./_filter');
-
-module.exports = async (inputBuffer) => {
+export default async function (inputBuffer) {
   utils.log.info('Loading image…');
 
-  const baseImage = await Jimp.read(path.resolve(__dirname, '../assets/base.png'));
+  const baseImage = await Jimp.read(Buffer.from(baseImageSource.split(',')[1], 'base64'));
 
   const baseShirtMask = filter.filterBaseColour(baseImage, 'r');
   utils.image.getReplaceablePixels(baseImage)
     .forEach(({ x, y }) => baseShirtMask.setPixelColour(utils.image.replaceableColour, x, y));
   const baseShirtMaskCropped = baseShirtMask.clone().autocrop();
 
-  const inputImage = await Jimp.read(
-    await sharp(inputBuffer)
-      .resize(128, 128, { kernel: 'nearest' })
-      .toBuffer()
+  const inputImage = utils.image.scale(
+    await Jimp.read(Buffer.from(inputBuffer.split(',')[1], 'base64')),
+    128,
+    128
   );
+
   const inputShirtMask = filter.clean(
     filter.filterBaseColour(inputImage, 'r'),
     Jimp.rgbaToInt(255, 0, 0, 255)
   );
   const inputShirtMaskCropped = inputShirtMask.clone().autocrop();
 
-  const scaledInputShirtMask = await Jimp.read(
-    await sharp(await inputShirtMaskCropped.getBufferAsync('image/png'))
-      .resize(baseShirtMaskCropped.bitmap.width, baseShirtMaskCropped.bitmap.height, { kernel: 'nearest' })
-      .toBuffer()
+  const scaledInputShirtMask = utils.image.scale(inputShirtMaskCropped, 
+    baseShirtMaskCropped.bitmap.width, 
+    baseShirtMaskCropped.bitmap.height
   );
 
   const replaceablePixels = utils.image.getReplaceablePixels(baseShirtMaskCropped);
@@ -50,10 +49,10 @@ module.exports = async (inputBuffer) => {
 
   const inputShirt = filter.applyMask(inputImage, inputShirtMask).autocrop();
 
-  const scaledInputShirt = await Jimp.read(
-    await sharp(await inputShirt.getBufferAsync('image/png'))
-      .resize(scaledInputShirtMask.bitmap.width, scaledInputShirtMask.bitmap.height, { kernel: 'nearest' })
-      .toBuffer()
+  const scaledInputShirt = utils.image.scale(
+    inputShirt,
+    scaledInputShirtMask.bitmap.width, 
+    scaledInputShirtMask.bitmap.height
   );
 
   const codeColours = replaceablePixels.map(({ x, y }) => scaledInputShirt.getPixelColour(x, y));

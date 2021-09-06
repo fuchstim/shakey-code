@@ -1,7 +1,7 @@
-const path = require('path');
-const Jimp = require('jimp');
+import path from 'path';
+import Jimp from 'jimp';
 
-const utils = require('../utils');
+import utils from '../utils'
 
 module.exports = async (code) => {
   utils.log.info('Loading base image…');
