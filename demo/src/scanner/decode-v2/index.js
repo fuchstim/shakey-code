@@ -11,16 +11,25 @@ class ShakeyCodeDecoder {
   async decode() {
     const inputImage = (await Jimp.read(Buffer.from(this._inputImage.split(',')[1], 'base64')));
 
-    const facePatternCandidates = this._findFacePatternCandidates(inputImage);
+    await this.drawDebug({ inputImage });
 
-    const bestCandidate = facePatternCandidates[0];
-    if(bestCandidate) {
+    const facePatternCandidates = this._findFacePatternCandidates(inputImage);
+    const face = facePatternCandidates[0];
+    
+    if(face) {
       this.drawDebug({
-        bestCandidate: inputImage.clone().crop(bestCandidate.x, bestCandidate.y, bestCandidate.width, bestCandidate.height)
+        face: inputImage.clone().crop(face.x, face.y, face.width, face.height)
       })
     }
 
-    await this.drawDebug({ inputImage });
+    const handPatternCandidates = this._findHandPatternCandidates(inputImage);
+    const hand = handPatternCandidates[0];
+
+    if(hand) {
+      this.drawDebug({
+        hand: inputImage.clone().crop(hand.x, hand.y, hand.width, hand.height)
+      })
+    }
   }
 
   _findFacePatternCandidates(inputImage) {
@@ -29,6 +38,21 @@ class ShakeyCodeDecoder {
       [{ length: 4, value: 0 }],
       [{ length: 2, value: 0 }, { length: 1, value: 1 }, { length: 1, value: 0 }],
       [{ length: 2, value: 1 }, { length: 2, value: 0 }],
+    ];
+
+    const pattern = new Pattern({ pattern: facePattern, drawDebug: s => this.drawDebug(s) });
+
+    const results = pattern.findCandidates(inputImage);
+
+    return results;
+  }
+
+  _findHandPatternCandidates(inputImage) {
+    const facePattern = [
+      [{ length: 1, value: 1 }, { length: 2, value: 0 }, { length: 2, value: 1}],
+      [{ length: 1, value: 1 }, { length: 3, value: 0 }, { length: 1, value: 1}],
+      [{ length: 1, value: 1 }, { length: 3, value: 0 }, { length: 1, value: 1}],
+      [{ length: 1, value: 0}, { length: 4, value: 1 }],
     ];
 
     const pattern = new Pattern({ pattern: facePattern, drawDebug: s => this.drawDebug(s) });
