@@ -10,12 +10,31 @@ function filterBaseColour(inputImage, baseColourComponent) {
     const baseColourComponentValue = pixelColour[baseColourComponent];
     const otherColourComponentValuess = COLOUR_COMPONENTS.filter(x => x !== baseColourComponent).map(x => pixelColour[x]);
 
-    if (otherColourComponentValuess.every(c => baseColourComponentValue <= (c * 1.5))) {
+    if (otherColourComponentValuess.every(c => baseColourComponentValue <= (c * 2))) {
       result.setPixelColour(0, x, y);
     } else {
       const cleanColour = { [baseColourComponent]: 255 };
 
       result.setPixelColour(Jimp.rgbaToInt(cleanColour.r || 0, cleanColour.g || 0, cleanColour.b || 0, 255), x, y);
+    }
+  });
+
+  return result;
+}
+
+function filterBitColours(inputImage, colourEncoder) {
+  const result = inputImage.clone();
+
+  result.scan(0, 0, result.bitmap.width, result.bitmap.height, (x, y) => {
+    const pixelColour = result.getPixelColour(x, y);
+    const { colour: bitColour } = colourEncoder.findClosestBitColour(pixelColour);
+
+    const colourDistance = colourEncoder.calculateColourDistance(pixelColour, bitColour);
+
+    if(colourDistance > 20000) {
+      result.setPixelColour(0, x, y);
+    } else {
+      result.setPixelColour(bitColour, x, y);
     }
   });
 
@@ -84,6 +103,7 @@ function applyMask(inputImage, maskImage) {
 
 export default {
   filterBaseColour,
+  filterBitColours,
   clean,
   applyMask,
 };

@@ -109,18 +109,18 @@ class ColourEncoder {
 
     const characterCodes = characterBits.map(c => parseInt(c.join(''), 3));
 
-    const decoded = characterCodes.map(c => {
-      const [ character ] = Object.entries(this.characterCodes)
-        .find(([ , code ]) => code === c);
+    // const decoded = characterCodes.map(c => {
+    //   const [ character ] = Object.entries(this.characterCodes)
+    //     .find(([ , code ]) => code === c);
 
-      if (!character) {
-        throw new Error(`Failed to resolve character with code ${c}`);
-      }
+    //   if (!character) {
+    //     throw new Error(`Failed to resolve character with code ${c}`);
+    //   }
 
-      return character;
-    }).join('');
+    //   return character;
+    // }).join('');
 
-    return decoded;
+    return characterCodes;
   }
 
   _padCharacterCode(characterCode) {
@@ -132,16 +132,15 @@ class ColourEncoder {
     return r;
   }
 
-  _findClosestBitColour(c) {
+  findClosestBitColour(c) {
     const [{ bit, colour }] = Object.entries(this.bitColours)
       .map(([ bit, colour ]) => {
-        const a = Jimp.intToRGBA(c);
-        const b = Jimp.intToRGBA(colour);
+        const distance = this.calculateColourDistance(c, colour);
 
         return {
           bit,
           colour,
-          distance: Math.pow(b.r - a.r, 2) + Math.pow(b.g - a.g, 2) + Math.pow(b.b - a.b, 2),
+          distance,
         };
       })
       .sort(({ distance: a }, { distance: b }) => a - b);
@@ -149,8 +148,15 @@ class ColourEncoder {
     return { bit, colour };
   }
 
+  calculateColourDistance(c1, c2) {
+    const a = Jimp.intToRGBA(c1);
+    const b = Jimp.intToRGBA(c2);
+
+    return Math.pow(b.r - a.r, 2) + Math.pow(b.g - a.g, 2) + Math.pow(b.b - a.b, 2);
+  }
+
   _findClosestBit(c) {
-    const { bit } = this._findClosestBitColour(c);
+    const { bit } = this.findClosestBitColour(c);
 
     return bit;
   }

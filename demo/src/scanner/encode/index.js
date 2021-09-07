@@ -1,12 +1,12 @@
-import path from 'path';
 import Jimp from 'jimp';
 
+import baseImageSource from '../assets/base.png';
 import utils from '../utils'
 
-module.exports = async (code) => {
+export default async function (code) {
   utils.log.info('Loading base image…');
 
-  const baseImage = await Jimp.read(path.resolve(__dirname, '../assets/base.png'));
+  const baseImage = await Jimp.read(Buffer.from(baseImageSource.split(',')[1], 'base64'));
 
   const { width, height } = baseImage.bitmap;
 
@@ -14,7 +14,7 @@ module.exports = async (code) => {
 
   utils.log.info(`Found ${replaceablePixels.length} replaceable pixels.`);
 
-  const colourEncoder = utils.ColourEncoder.create();
+  const colourEncoder = new utils.ColourEncoder();
   const encodedCode = colourEncoder.encode(code, { length: replaceablePixels.length, includeParityBit: true });
 
   encodedCode.forEach((colour, index) => {
@@ -27,7 +27,7 @@ module.exports = async (code) => {
 
   outputImage.composite(baseImage, Math.floor(width / 5), Math.floor(height / 5));
 
-  const result = await utils.image.scale(outputImage, 512, 512).getBufferAsync('image/png');
+  const result = await outputImage.resize(512, 512, Jimp.RESIZE_NEAREST_NEIGHBOR).getBase64Async('image/png');
 
   return result;
 };
