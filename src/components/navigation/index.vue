@@ -6,6 +6,7 @@
     width: 100%;
     background-color: #009fff;
     height: 48px;
+    box-shadow: #ebebeb 0 0 10px;
   }
 
   div.container img.icon {
@@ -22,7 +23,7 @@
     padding: 0 12px;
     text-decoration: none;
     color: white;
-    transition: all .2s cubic-bezier(0.075, 0.82, 0.165, 1);
+    transition: all .2s ease-in-out;
   }
 
   div.container div.item:hover, div.container div.item.active {

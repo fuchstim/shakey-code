@@ -33,6 +33,8 @@
 
   div.preview video {
     width: 100%;
+    border-radius: 10px;
+    box-shadow: #ebebeb 0 0 10px;
   }
 
   div.preview div.viewfinder {

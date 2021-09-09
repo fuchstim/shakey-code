@@ -7,12 +7,20 @@
     margin-bottom: 2px;
   }
 
-  input {
+  input.code {
     width: calc(100% - 36px);
     border-radius: 10px;
-    border: none;
+    border: 1px solid #f1f1f1;
     background-color: #f1f1f1;
     padding: 8px 16px;
+    transition: all .2s ease-in-out;
+  }
+
+  input.code:focus {
+    border: 1px solid #009fff;
+    outline: none;
+    box-shadow: #ebebeb 0 0 10px;
+    transform: scale(1.005);
   }
 
   p#error {
@@ -39,6 +47,7 @@
     </p>
     <input
       v-model="input"
+      class="code"
       type="text"
       autofocus
     >

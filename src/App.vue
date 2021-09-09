@@ -24,7 +24,7 @@
     height: 100%;
     padding: 32px 48px 48px 48px;
     border-radius: 0 0 10px 10px;
-    box-shadow: #f1f1f1 0 0 15px;
+    box-shadow: #ebebeb 0 0 20px;
   }
 
   @media only screen and (max-width: 600px) {
