@@ -61,6 +61,7 @@
     </div>
 
     <video autoplay loop ref="inputVideo" src="../../demo.mp4" style="display: none" />
+    <!-- <img ref="inputVideo" src="../../test.jpg" style="display: none" /> -->
 
     <p id="result">{{result}}</p>
     <p id="error">{{error}}</p>
@@ -108,6 +109,8 @@ export default {
           (1000 / this.fps)
         );
 
+        this.detectCode(video)
+
         this.isScanning = true;
       } catch(e) {
         this.error = e.message;
@@ -127,8 +130,8 @@ export default {
     async detectCode(video) {
       const canvas = this.$refs.viewfinder;
 
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
+      canvas.width = video.width || video.videoWidth;
+      canvas.height = video.height || video.videoHeight;
 
       canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
       canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);

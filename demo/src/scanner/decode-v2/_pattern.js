@@ -5,7 +5,7 @@ const WHITE = Jimp.rgbaToInt(255, 255, 255, 255);
 class Pattern {
   constructor(options) {
     this.pattern = options.pattern;
-    this.lightDarkCutoff = options.lightDarkCutoff || Jimp.rgbaToInt(20, 20, 20, 255);
+    this.lightDarkCutoff = options.lightDarkCutoff || Jimp.rgbaToInt(10, 10, 10, 255);
     this.drawDebug = options.drawDebug;
     this.accuracy = options.accuracy || 0.5;
     this.patternMatchThreshold = options.patternMatchThreshold || this.accuracy;
@@ -27,8 +27,6 @@ class Pattern {
     const bestCandidates = candidatesWithMatchScore
       .filter(({ matchScore }) => matchScore >= this.patternMatchThreshold)
       .sort((a, b) => b - a);
-    
-    this.drawDebug({ outlines, })
 
     return bestCandidates;
   }
@@ -36,6 +34,8 @@ class Pattern {
   _findOutlines(input) {
     const outlines = input.clone();
     outlines
+      .greyscale()
+      .contrast(0.1)
       .scan(0, 0, outlines.bitmap.width, outlines.bitmap.height, (x, y) => {
         if(outlines.getPixelColour(x, y) >= this.lightDarkCutoff) {
           outlines.setPixelColour(WHITE, x, y);
@@ -87,7 +87,7 @@ class Pattern {
   _findCandidatesWithLineSequences(lineSequences) {
     const candidates = [];
 
-    lineSequences.forEach((row, rowIndex) => {
+    lineSequences.forEach(row => {
       row.forEach((segment, segmentIndex) => {
         const overlappingCandidate = candidates.some(({ x, y, width, height }) => {
           const overlapX = segment.x >= x && segment.x <= (x + width);
@@ -222,7 +222,7 @@ class Pattern {
     const candidateArea = outlines.clone().crop(candidate.x, candidate.y, candidate.width, candidate.height);
 
     // Result of _getLineSequences is one-indexed, so we remove the first element
-    const candidateLineSequences = this._getLineSequences(candidateArea).slice(1);
+    const candidateLineSequences = this._getLineSequences(candidateArea);
 
     const patternLineSequences = this.pattern;
 

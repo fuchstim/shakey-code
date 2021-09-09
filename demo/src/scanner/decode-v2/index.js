@@ -1,6 +1,8 @@
 import Jimp from 'jimp';
 
+import filter from './_filter';
 import Pattern from './_pattern';
+import utils from '../utils';
 
 class ShakeyCodeDecoder {
   constructor(inputImage, drawDebug) {
@@ -11,44 +13,52 @@ class ShakeyCodeDecoder {
   async decode() {
     const inputImage = (await Jimp.read(Buffer.from(this._inputImage.split(',')[1], 'base64')));
 
-    await this.drawDebug({ inputImage });
-
-    const facePatternCandidates = this._findFacePatternCandidates(inputImage);
-    const face = facePatternCandidates[0];
-    
-    if(face) {
-      this.drawDebug({
-        face: inputImage.clone().crop(face.x, face.y, face.width, face.height)
-      })
-    }
-
     const tailPatternCandidates = this._findTailPatternCandidates(inputImage);
     const tail = tailPatternCandidates[0];
 
-    if(tail) {
-      this.drawDebug({
-        tail: inputImage.clone().crop(tail.x, tail.y, tail.width, tail.height)
-      })
+    if(!tail) { return; }
+
+    const tailPatternWidthRatio = 7 / 11;
+    const tailPatternHeightRatio = 7 / 5;
+
+    const patternLocation = {
+      x: tail.x + tail.width,
+      y: tail.y - (((tail.height * tailPatternHeightRatio) - tail.height) / 2),
+      width: Math.ceil(tail.width * tailPatternWidthRatio),
+      height: Math.ceil(tail.height * tailPatternHeightRatio)
+    };
+
+    const pattern = inputImage
+    .clone()
+    .crop(patternLocation.x, patternLocation.y, patternLocation.width, patternLocation.height);
+    
+    const patternSize = 7;
+    const pixelHeight = Math.round(patternLocation.height / patternSize);
+    const pixelWidth = Math.round(patternLocation.width / patternSize);
+    
+    const colourEncoder = new utils.ColourEncoder();
+    
+    const bits = [];
+    for(let yIndex = 1; yIndex < patternSize - 1; yIndex++) {
+      const y = yIndex * pixelWidth;
+
+      for(let xIndex = 1; xIndex < patternSize - 1; xIndex++) {
+        const x = xIndex * pixelWidth;
+
+        const primaryBitColour = filter.filterPrimaryBitColour(
+          pattern.clone().crop(x, y, pixelWidth, pixelHeight),
+          colourEncoder
+        );
+
+        bits.push(primaryBitColour);
+      }
     }
-  }
 
-  _findFacePatternCandidates(inputImage) {
-    const facePattern = [
-      [{ length: 2, value: 1 }, { length: 1, value: 0 }, {length: 1, value: 1}],
-      [{ length: 4, value: 0 }],
-      [{ length: 2, value: 0 }, { length: 1, value: 1 }, { length: 1, value: 0 }],
-      [{ length: 2, value: 1 }, { length: 2, value: 0 }],
-    ];
-
-    const pattern = new Pattern({ pattern: facePattern, drawDebug: s => this.drawDebug(s) });
-
-    const results = pattern.findCandidates(inputImage);
-
-    return results;
+    return bits;
   }
 
   _findTailPatternCandidates(inputImage) {
-    const facePattern = [
+    const tailPattern = [
       [{ length: 3, value: 1 }, { length: 2, value: 0 }, { length: 1, value: 1 }, { length: 2, value: 0 }, { length: 3, value: 1 }],
       [{ length: 1, value: 0 }, { length: 1, value: 1 }, { length: 3, value: 0 }, { length: 1, value: 1 }, { length: 3, value: 0 }, { length: 2, value: 1 }],
       [{ length: 1, value: 0 }, { length: 1, value: 1 }, { length: 1, value: 0 }, { length: 3, value: 1 }, { length: 3, value: 0 }, { length: 2, value: 1 }],
@@ -56,7 +66,7 @@ class ShakeyCodeDecoder {
       [{ length: 2, value: 0 }, { length: 1, value: 1 }, { length: 3, value: 0 }, { length: 1, value: 1 }, { length: 3, value: 0 }, { length: 1, value: 1 }],
     ];
 
-    const pattern = new Pattern({ pattern: facePattern, drawDebug: s => this.drawDebug(s) });
+    const pattern = new Pattern({ pattern: tailPattern, drawDebug: s => this.drawDebug(s) });
 
     const results = pattern.findCandidates(inputImage);
 
