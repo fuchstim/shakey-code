@@ -13,14 +13,14 @@ class ShakeyCodeDecoder {
 
     await this.drawDebug({ inputImage });
 
-    // const facePatternCandidates = this._findFacePatternCandidates(inputImage);
-    // const face = facePatternCandidates[0];
+    const facePatternCandidates = this._findFacePatternCandidates(inputImage);
+    const face = facePatternCandidates[0];
     
-    // if(face) {
-    //   this.drawDebug({
-    //     face: inputImage.clone().crop(face.x, face.y, face.width, face.height)
-    //   })
-    // }
+    if(face) {
+      this.drawDebug({
+        face: inputImage.clone().crop(face.x, face.y, face.width, face.height)
+      })
+    }
 
     const tailPatternCandidates = this._findTailPatternCandidates(inputImage);
     const tail = tailPatternCandidates[0];

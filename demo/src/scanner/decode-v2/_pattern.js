@@ -19,9 +19,9 @@ class Pattern {
     
     const candidates = this._findCandidatesWithLineSequences(lineSequences);
 
-    const candidatesWithMatchScore = candidates.map((c, index) => ({ 
+    const candidatesWithMatchScore = candidates.map(c => ({ 
       ...c,
-       matchScore: this._calculateCandidateMatchScore(outlines, c, index),
+       matchScore: this._calculateCandidateMatchScore(outlines, c),
     }));
 
     const bestCandidates = candidatesWithMatchScore
@@ -218,10 +218,8 @@ class Pattern {
     return deduplicatedSequences;
   }
 
-  _calculateCandidateMatchScore(outlines, candidate, index) {
+  _calculateCandidateMatchScore(outlines, candidate) {
     const candidateArea = outlines.clone().crop(candidate.x, candidate.y, candidate.width, candidate.height);
-
-    this.drawDebug({ [`candidateArea${index}`]: candidateArea })
 
     // Result of _getLineSequences is one-indexed, so we remove the first element
     const candidateLineSequences = this._getLineSequences(candidateArea).slice(1);
