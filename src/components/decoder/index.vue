@@ -71,10 +71,6 @@
       Decode
     </h1>
 
-    <button @click="detectCode">
-      Run
-    </button>
-
     <p class="label">
       Scanning... {{ progress || 0 }}%
     </p>
