@@ -28,7 +28,7 @@
 
 <script>
 
-import { encode } from '../../scanner'
+import ShakeyCodeEncoder from '../../lib/encode'
 
 export default {
   name: 'encoder',
@@ -36,12 +36,13 @@ export default {
   data: () => ({
     input: undefined,
     error: null,
-    result: null
+    result: null,
+    encoder: new ShakeyCodeEncoder()
   }),
 
   watch: {
     input(code) {
-      return encode(code)
+      return this.encoder.encode(code)
         .then(r => {
           this.error = null;
           this.result = r;

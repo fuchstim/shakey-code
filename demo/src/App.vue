@@ -14,26 +14,17 @@
 
 <template>
   <div id="app">
-    <!-- <encoder style="width: 30%; margin-right: 24px" /> -->
-
-    <!-- <decoder style="width: 70%" /> -->
-
-    <decoder />
+    <router-view />
   </div>
 </template>
 
 <script>
-import encoder from './components/encoder/index.vue';
-import decoder from './components/decoder/index.vue';
 
 export default {
   name: 'shakey-demo',
 
   data: () => ({ }),
 
-  components: {
-    encoder,
-    decoder,
-  },
+  components: { },
 };
 </script>

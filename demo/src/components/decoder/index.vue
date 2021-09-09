@@ -70,7 +70,7 @@
 
 <script>
 
-import ShakeyCodeDecoder from '../../scanner/decode';
+import ShakeyCodeDecoder from '../../lib/decode';
 
 export default {
   name: 'decoder',
