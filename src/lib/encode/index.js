@@ -15,7 +15,7 @@ class ShakeyCodeEncoder {
     const replaceablePixels = utils.image.getReplaceablePixels(baseImage);
 
     const colourEncoder = new utils.ColourEncoder();
-    const encodedCode = colourEncoder.encode(code, { length: replaceablePixels.length, includeParityBit: true });
+    const encodedCode = colourEncoder.encode(code, { length: replaceablePixels.length });
 
     encodedCode.forEach((colour, index) => {
       const { x, y } = replaceablePixels[index];

@@ -62,6 +62,12 @@ class ColourEncoder {
 
     const characters = input.split('');
 
+    const maxBitCount = length - 1;
+    const maxCharacterCount = Math.floor(maxBitCount / this.charLength);
+    if (characters.length > maxCharacterCount) {
+      throw new Error(`Input exceeds max length of ${maxCharacterCount}`);
+    }
+
     const characterCodes = characters.map(c => {
       const characterCode = this.characterCodes[c];
 
@@ -72,23 +78,12 @@ class ColourEncoder {
       return this._padCharacterCode(characterCode.toString(3));
     });
 
-    const bits = characterCodes
-      .join('')
-      .split('');
+    const bits = Array(maxBitCount)
+      .fill()
+      .map((_, index) => characterCodes.join('').split('')[index] || '0');
 
     const parityBit = bits.reduce((acc, b) => acc + Number(b), 0);
     bits.push(String(parityBit % 3));
-
-    if (length > 0 && bits.length > length) {
-      throw new Error(`Encoded value has length ${bits.length} which exceeds max length of ${length}`);
-    }
-
-    const paddingLength = length > 0 && length - bits.length;
-    if (paddingLength) {
-      const padding = Array(paddingLength).fill('0');
-
-      bits.push(...padding);
-    }
 
     return bits.map(b => this.bitColours[b]);
   }
@@ -96,12 +91,13 @@ class ColourEncoder {
   decode(colours) {
     const bits = colours.map(c => this._findClosestBit(c));
 
-    const characterBits = Array(Math.ceil(bits.length / this.charLength))
+    const characterBitsCount = bits.length - 1;
+    const characterBits = Array(Math.floor(characterBitsCount / this.charLength))
       .fill()
       .map((_, index) => bits.slice(index * this.charLength, (index + 1) * this.charLength))
       .filter(c => !c.every(b => b === '0'));
 
-    const parityBit = characterBits.pop()[0];
+    const parityBit = bits.pop();
     const parityBitCheck = characterBits
       .map(c => c.reduce((acc, b) => acc + Number(b), 0))
       .reduce((acc, s) => acc + Number(s), 0);
