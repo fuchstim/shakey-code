@@ -1,10 +1,4 @@
 <style scoped>
-  /* 
-  #ff4b55 > red
-  #ffffff > white
-  #009fff > blue
- */
-
   div.container {
     display: flex;
     flex-direction: row;
@@ -40,21 +34,28 @@
 
 <template>
   <div class="container">
-    <div class="item" :class="{ active: $route.path === route.path }" v-for="route in routes" :key="route.path">
-      <router-link :to="route.path">{{ route.title }}</router-link>
+    <div
+      v-for="route in routes"
+      :key="route.path"
+      class="item"
+      :class="{ active: $route.path === route.path }"
+    >
+      <router-link :to="route.path">
+        {{ route.title }}
+      </router-link>
     </div>
   </div>
 </template>
 
 <script>
 export default {
-  name: 'navigation',
+  name: 'Navigation',
 
   data: () => ({
     routes: [
       { path: '/encode', title: 'Encode' },
       { path: '/decode', title: 'Decode' },
-    ]
-  })
-}
+    ],
+  }),
+};
 </script>

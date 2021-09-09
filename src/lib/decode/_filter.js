@@ -1,5 +1,3 @@
-import Jimp from 'jimp';
-
 function filterPrimaryBitColour(inputImage, colourEncoder) {
   const colourCounts = {};
 
@@ -9,13 +7,13 @@ function filterPrimaryBitColour(inputImage, colourEncoder) {
 
     const colourDistance = colourEncoder.calculateColourDistance(pixelColour, bitColour);
 
-    if(colourDistance < 20000) {
+    if (colourDistance < 20000) {
       colourCounts[bitColour] = (colourCounts[bitColour] || 0) + 1;
     }
   });
 
   const primaryColour = Object.entries(colourCounts)
-    .sort(([, a], [, b]) => a - b)
+    .sort(([ , a ], [ , b ]) => a - b)
     .pop();
 
   return primaryColour && Number(primaryColour[0]);
@@ -30,7 +28,7 @@ function filterBitColours(inputImage, colourEncoder) {
 
     const colourDistance = colourEncoder.calculateColourDistance(pixelColour, bitColour);
 
-    if(colourDistance > 20000) {
+    if (colourDistance > 20000) {
       result.setPixelColour(0, x, y);
     } else {
       result.setPixelColour(bitColour, x, y);

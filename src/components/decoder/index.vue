@@ -67,23 +67,52 @@
 
 <template>
   <div>
-    <h1 class="title">Decode</h1>
+    <h1 class="title">
+      Decode
+    </h1>
 
-    <button @click="detectCode">Run</button>
+    <button @click="detectCode">
+      Run
+    </button>
 
-    <p class="label">Scanning... {{progress || 0}}%</p>
-    <p class="result" v-if="result">{{result}}</p>
-    <p class="error" v-if="error">{{error}}</p>
+    <p class="label">
+      Scanning... {{ progress || 0 }}%
+    </p>
+    <p
+      v-if="result"
+      class="result"
+    >
+      {{ result }}
+    </p>
+    <p
+      v-if="error"
+      class="error"
+    >
+      {{ error }}
+    </p>
 
     <div class="preview">
-      <div class="viewfinder" ref="viewfinder" />
-      <video autoplay playsinline ref="preview" />
+      <div
+        ref="viewfinder"
+        class="viewfinder"
+      />
+      <video
+        ref="preview"
+        autoplay
+        playsinline
+      />
     </div>
 
     <div class="canvases">
-      <canvas class="focus" ref="focus" />
+      <canvas
+        ref="focus"
+        class="focus"
+      />
 
-      <div class="debugViews" ref="debugViews" />
+      <div
+        ref="debugViews"
+        class="debugViews"
+      />
     </div>
   </div>
 </template>
@@ -93,7 +122,7 @@
 import ShakeyCodeDecoder from '../../lib/decode';
 
 export default {
-  name: 'decoder',
+  name: 'Decoder',
 
   data: () => ({
     stream: null,
@@ -105,15 +134,15 @@ export default {
     progress: 0,
 
     debugViews: {},
-    decoder: new ShakeyCodeDecoder()
+    decoder: new ShakeyCodeDecoder(),
   }),
 
   async mounted() {
     try {
-      this.stream = await navigator.mediaDevices.getUserMedia({ 
-        video: { 
-          facingMode: { ideal: 'environment' }
-        } 
+      this.stream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          facingMode: { ideal: 'environment' },
+        },
       });
 
       this.decoder._drawDebug = (id, content) => this.drawDebug(id, content);
@@ -121,7 +150,7 @@ export default {
       this.decoder.onSampleRecorded = ({ sampleProgress }) => this.progress = sampleProgress;
 
       this.startScan();
-    } catch(error) {
+    } catch (error) {
       this.stopScan();
 
       this.error = error.message;
@@ -133,19 +162,19 @@ export default {
   },
 
   methods: {
-    async startScan() {
+    startScan() {
       try {
         const video = this.$refs.preview;
         video.srcObject = this.stream;
 
         this.scanInterval && clearInterval(this.scanInterval);
         this.scanInterval = setInterval(
-          () => this.detectCode(), 
+          () => this.detectCode(),
           (1000 / this.fps)
         );
 
         this.isScanning = true;
-      } catch(e) {
+      } catch (e) {
         this.error = e.message;
       }
     },
@@ -162,10 +191,9 @@ export default {
       const video = this.$refs.preview;
       const focus = this.$refs.focus;
 
-
       const scanArea = this.computeScanArea({ width: video.videoWidth, height: video.videoHeight });
 
-      this.updateViewfinder(scanArea)
+      this.updateViewfinder(scanArea);
 
       focus.width = scanArea.width;
       focus.height = scanArea.height;
@@ -180,18 +208,18 @@ export default {
         /* dx = */ 0,
         /* dy = */ 0,
         /* dWidth = */ focus.width,
-        /* dHeight = */ focus.height,
+        /* dHeight = */ focus.height
       );
 
       try {
         await this.decoder.decode(focus.toDataURL().split(',')[1]);
-      } catch(e) {
+      } catch (e) {
         this.error = e.message;
         throw e;
       }
     },
 
-    computeScanArea({ width, height, }) {
+    computeScanArea({ width, height }) {
       const scanAreaWidth = Math.max(width, height) / 2;
       const topCornerX = width === scanAreaWidth ? 0 : ((width - scanAreaWidth) / 2);
       const topCornerY = height === scanAreaWidth ? 0 : ((height - scanAreaWidth) / 2);
@@ -199,13 +227,13 @@ export default {
       const relativeWidth = scanAreaWidth / width;
       const relativeHeight = scanAreaWidth / height;
 
-      return { 
+      return {
         width: scanAreaWidth,
         height: scanAreaWidth,
         relativeWidth,
         relativeHeight,
         x: topCornerX,
-        y: topCornerY
+        y: topCornerY,
       };
     },
 
@@ -222,13 +250,13 @@ export default {
 
     drawDebug(id, content) {
       let canvas;
-      if(this.debugViews[id]) {
+      if (this.debugViews[id]) {
         canvas = this.debugViews[id].canvas;
       } else {
         const container = document.createElement('div');
         const title = document.createElement('h4');
         title.innerText = id;
-        
+
         canvas = document.createElement('canvas');
         container.appendChild(title);
         container.appendChild(canvas);
@@ -243,28 +271,28 @@ export default {
 
       canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
 
-      let ratio  = Math.min(canvas.width / content.width, canvas.height / content.height);
+      let ratio = Math.min(canvas.width / content.width, canvas.height / content.height);
       let x = (canvas.width - content.width * ratio) / 2;
       let y = (canvas.height - content.height * ratio) / 2;
 
       var image = new Image();
-      
-      image.onload = function() {
+
+      image.onload = function () {
         canvas.getContext('2d').drawImage(
-          image, 
-          0, 
-          0, 
-          content.width, 
+          image,
+          0,
+          0,
+          content.width,
           content.height,
-          x, 
-          y, 
-          content.width * ratio, 
+          x,
+          y,
+          content.width * ratio,
           content.height * ratio
         );
       };
 
       image.src = content.data || content.toDataURL();
-    }
-  }
-}
+    },
+  },
+};
 </script>

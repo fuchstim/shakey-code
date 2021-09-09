@@ -11,7 +11,7 @@ class ShakeyCodeDecoder {
     this.onResult = onResult || (() => {});
     this.sampleCount = sampleCount || 3;
 
-    this.tailPattern = new Pattern({ 
+    this.tailPattern = new Pattern({
       drawDebug: s => this.drawDebug(s),
       pattern: [
         [{ length: 3, value: 1 }, { length: 2, value: 0 }, { length: 1, value: 1 }, { length: 2, value: 0 }, { length: 3, value: 1 }],
@@ -19,7 +19,7 @@ class ShakeyCodeDecoder {
         [{ length: 1, value: 0 }, { length: 1, value: 1 }, { length: 1, value: 0 }, { length: 3, value: 1 }, { length: 3, value: 0 }, { length: 2, value: 1 }],
         [{ length: 1, value: 0 }, { length: 3, value: 1 }, { length: 2, value: 0 }, { length: 5, value: 1 }],
         [{ length: 2, value: 0 }, { length: 1, value: 1 }, { length: 3, value: 0 }, { length: 1, value: 1 }, { length: 3, value: 0 }, { length: 1, value: 1 }],
-      ], 
+      ],
     });
 
     this.colourEncoder = new utils.ColourEncoder();
@@ -28,15 +28,16 @@ class ShakeyCodeDecoder {
   }
 
   async decode(inputData) {
-    if(!inputData.length) {
+    if (!inputData.length) {
       return;
     }
-    
+
+    // eslint-disable-next-line no-undef
     const inputImage = (await Jimp.read(Buffer.from(inputData, 'base64')));
 
     const tail = this._findTailPattern(inputImage);
 
-    if(!tail) { return; }
+    if (!tail) { return; }
 
     const code = this._cropCode(inputImage, tail);
 
@@ -44,12 +45,12 @@ class ShakeyCodeDecoder {
 
     this._recordSample(bits);
 
-    if(this.samples.length >= this.sampleCount) {
+    if (this.samples.length >= this.sampleCount) {
       try {
-        const result = this.colourEncoder.decode(this.samples[0])
+        const result = this.colourEncoder.decode(this.samples[0]);
 
-        this.onResult.apply(this.onResult, [ result ])
-      } catch(error) {
+        this.onResult.apply(this.onResult, [ result ]);
+      } catch (error) {
         this.samples = [];
 
         console.error(error);
@@ -71,7 +72,7 @@ class ShakeyCodeDecoder {
       x: tail.x + tail.width,
       y: tail.y - (((tail.height * tailCodeHeightRatio) - tail.height) / 2),
       width: Math.ceil(tail.width * tailCodeWidthRatio),
-      height: Math.ceil(tail.height * tailCodeHeightRatio)
+      height: Math.ceil(tail.height * tailCodeHeightRatio),
     };
 
     const code = inputImage
@@ -87,10 +88,10 @@ class ShakeyCodeDecoder {
     const pixelWidth = Math.round(code.bitmap.width / codeSize);
 
     const bits = [];
-    for(let yIndex = 1; yIndex < codeSize - 1; yIndex++) {
+    for (let yIndex = 1; yIndex < codeSize - 1; yIndex++) {
       const y = yIndex * pixelWidth;
 
-      for(let xIndex = 1; xIndex < codeSize - 1; xIndex++) {
+      for (let xIndex = 1; xIndex < codeSize - 1; xIndex++) {
         const x = xIndex * pixelWidth;
 
         const primaryBitColour = filter.filterPrimaryBitColour(
@@ -106,22 +107,21 @@ class ShakeyCodeDecoder {
   }
 
   _recordSample(bits) {
-    if(!this._compareSample(this.samples[0], bits)) {
+    if (!this._compareSample(this.samples[0], bits)) {
       this.samples = [ bits ];
     } else {
       this.samples.push(bits);
     }
 
-
-    this.onSampleRecorded.apply(this.onSampleRecorded, [ { 
+    this.onSampleRecorded.apply(this.onSampleRecorded, [{
       bits,
       samples: this.samples,
-      sampleProgress: Math.min(Math.round((this.samples.length * 100) / this.sampleCount), 100)
-    } ]);
+      sampleProgress: Math.min(Math.round((this.samples.length * 100) / this.sampleCount), 100),
+    }]);
   }
 
   _compareSample(sample1, sample2) {
-    if(!sample1 || !sample2) {
+    if (!sample1 || !sample2) {
       return false;
     }
 
@@ -133,10 +133,10 @@ class ShakeyCodeDecoder {
       .reduce(async (chain, [ id, source ]) => {
         await chain;
 
-        this._drawDebug(id, { 
-          width: source.bitmap.width, 
-          height: source.bitmap.height, 
-          data: await source.getBase64Async('image/png') 
+        this._drawDebug(id, {
+          width: source.bitmap.width,
+          height: source.bitmap.height,
+          data: await source.getBase64Async('image/png'),
         });
       }, Promise.resolve());
   }

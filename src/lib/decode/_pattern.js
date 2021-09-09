@@ -14,14 +14,14 @@ class Pattern {
 
   findCandidates(inputImage) {
     const outlines = this._findOutlines(inputImage);
-    
+
     const lineSequences = this._getLineSequences(outlines);
-    
+
     const candidates = this._findCandidatesWithLineSequences(lineSequences);
 
-    const candidatesWithMatchScore = candidates.map(c => ({ 
+    const candidatesWithMatchScore = candidates.map(c => ({
       ...c,
-       matchScore: this._calculateCandidateMatchScore(outlines, c),
+      matchScore: this._calculateCandidateMatchScore(outlines, c),
     }));
 
     const bestCandidates = candidatesWithMatchScore
@@ -37,10 +37,10 @@ class Pattern {
       .greyscale()
       .contrast(0.1)
       .scan(0, 0, outlines.bitmap.width, outlines.bitmap.height, (x, y) => {
-        if(outlines.getPixelColour(x, y) >= this.lightDarkCutoff) {
+        if (outlines.getPixelColour(x, y) >= this.lightDarkCutoff) {
           outlines.setPixelColour(WHITE, x, y);
         } else {
-          outlines.setPixelColour(BLACK, x, y)
+          outlines.setPixelColour(BLACK, x, y);
         }
       });
 
@@ -50,31 +50,31 @@ class Pattern {
   _getLineSequences(outlines) {
     const lineSequences = [];
 
-    for(let y = 1; y <= outlines.bitmap.height; y++) {
+    for (let y = 1; y <= outlines.bitmap.height; y++) {
       lineSequences[y] = [];
 
-      let currentLineSegment = { 
+      let currentLineSegment = {
         x: 0,
         y,
-        value: outlines.getPixelColour(1, y) === BLACK ? 1 : 0, 
-        length: 0 
+        value: outlines.getPixelColour(1, y) === BLACK ? 1 : 0,
+        length: 0,
       };
 
-      for(let x = 1; x <= outlines.bitmap.width; x++) {
+      for (let x = 1; x <= outlines.bitmap.width; x++) {
         const pixelValue = outlines.getPixelColour(x, y) === BLACK ? 1 : 0;
 
-        if(currentLineSegment.value === pixelValue) {
+        if (currentLineSegment.value === pixelValue) {
           currentLineSegment.length++;
         } else {
-          if(currentLineSegment.length >= this.minSegmentLength) {
+          if (currentLineSegment.length >= this.minSegmentLength) {
             lineSequences[y].push(currentLineSegment);
           }
 
-          currentLineSegment = { x, y, value: pixelValue, length: 1 }
+          currentLineSegment = { x, y, value: pixelValue, length: 1 };
         }
       }
 
-      if(currentLineSegment.length >= this.minSegmentLength) {
+      if (currentLineSegment.length >= this.minSegmentLength) {
         lineSequences[y].push(currentLineSegment);
       }
     }
@@ -95,7 +95,7 @@ class Pattern {
 
           return overlapX && overlapY;
         });
-        if(overlappingCandidate) {
+        if (overlappingCandidate) {
           return;
         }
 
@@ -103,7 +103,7 @@ class Pattern {
         const checkSequence = row.slice(segmentIndex, segmentIndex + patternStart.length);
 
         const sequencesMatch = this._compareSequences(patternStart, checkSequence);
-        if(!sequencesMatch) {
+        if (!sequencesMatch) {
           return;
         }
 
@@ -122,7 +122,7 @@ class Pattern {
           scale,
           width: checkSequenceWidth,
           height: checkSequenceHeight,
-        })
+        });
       });
     });
 
@@ -140,8 +140,8 @@ class Pattern {
     );
     const baseLength = baseLengths.reduce((acc, x) => acc + x, 0) / baseLengths.length;
 
-    const result = sequence.map(segment => ({ 
-      ...segment, 
+    const result = sequence.map(segment => ({
+      ...segment,
       relativeLength: segment.length / baseLength,
     }));
 
@@ -152,23 +152,22 @@ class Pattern {
     return sequence.slice(
       sequence[0].value === 0 ? 1 : 0,
       sequence[sequence.length - 1].value === 0 ? (sequence.length - 1) : sequence.length
-    )
+    );
   }
 
   _compareSequences(seq1, seq2) {
-    const seq1Values = this._trimSequence(seq1).map(({ value }) => value)
+    const seq1Values = this._trimSequence(seq1).map(({ value }) => value);
 
-    const seq2Values = this._trimSequence(seq2).map(({ value }) => value)
-
+    const seq2Values = this._trimSequence(seq2).map(({ value }) => value);
 
     // Check sequences have same number of segments
-    if(seq1Values.length !== seq2Values.length) {
+    if (seq1Values.length !== seq2Values.length) {
       return false;
     }
 
     // Check segments have same values
-    for(let i = 0; i < seq1Values.length; i++) {
-      if(seq1Values[i] !== seq2Values[i]) {
+    for (let i = 0; i < seq1Values.length; i++) {
+      if (seq1Values[i] !== seq2Values[i]) {
         return false;
       }
     }
@@ -177,11 +176,11 @@ class Pattern {
     const seq1RelativeSegmentLengths = this._calculateRelativeSegmentLengths(seq1).map(({ relativeLength }) => relativeLength);
     const seq2RelativeSegmentLengths = this._calculateRelativeSegmentLengths(seq2).map(({ relativeLength }) => relativeLength);
 
-    for(let i = 0; i < seq1RelativeSegmentLengths.length; i++) {
+    for (let i = 0; i < seq1RelativeSegmentLengths.length; i++) {
       const l1 = seq1RelativeSegmentLengths[i];
       const l2 = seq2RelativeSegmentLengths[i];
 
-      if(l1 < l2 * this.accuracy || l1 > l2 * (2 - this.accuracy)) {
+      if (l1 < l2 * this.accuracy || l1 > l2 * (2 - this.accuracy)) {
         return false;
       }
     }
@@ -192,18 +191,18 @@ class Pattern {
   _deduplicateSequences(sequences) {
     const matchCounts = [];
     const deduplicatedSequences = sequences.reduce((acc, sequence) => {
-      if(!acc.length) {
+      if (!acc.length) {
         matchCounts.push(0);
         return [ sequence ];
       }
 
       const matchesPrevious = this._compareSequences(sequence, acc[acc.length - 1]);
-      if(matchesPrevious) {
+      if (matchesPrevious) {
         matchCounts[matchCounts.length - 1] += 1;
       } else {
         // If this row has appeared less than 1 time, discard it
 
-        if(matchCounts[matchCounts.length - 1] < 1) {
+        if (matchCounts[matchCounts.length - 1] < 1) {
           acc.pop();
           matchCounts.pop();
         }
@@ -227,7 +226,6 @@ class Pattern {
     const patternLineSequences = this.pattern;
 
     const rowCount = Math.min(candidateLineSequences.length, patternLineSequences.length);
-
 
     const lineMatchResults = Array(rowCount).fill()
       .map((_, index) => {

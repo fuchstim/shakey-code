@@ -6,4 +6,4 @@ export default {
   log,
   image,
   ColourEncoder,
-}
+};

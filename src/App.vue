@@ -1,4 +1,3 @@
-
 <style>
   html, body {
     margin: 0;
@@ -38,7 +37,6 @@
   }
 </style>
 
-
 <template>
   <div id="app">
     <navigation style="z-index: 1" />
@@ -54,12 +52,12 @@
 import navigation from './components/navigation';
 
 export default {
-  name: 'shakey-demo',
-
-  data: () => ({ }),
+  name: 'ShakeyDemo',
 
   components: {
     navigation,
   },
+
+  data: () => ({ }),
 };
 </script>

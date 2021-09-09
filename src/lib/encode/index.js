@@ -1,12 +1,13 @@
 import Jimp from 'jimp';
 
 import baseImageSource from '../assets/base.png';
-import utils from '../utils'
+import utils from '../utils';
 
 class ShakeyCodeEncoder {
   constructor() { }
 
   async encode(code) {
+    // eslint-disable-next-line no-undef
     const baseImage = await Jimp.read(Buffer.from(baseImageSource.split(',')[1], 'base64'));
 
     const { width, height } = baseImage.bitmap;

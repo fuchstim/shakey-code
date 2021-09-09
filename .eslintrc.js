@@ -1,17 +1,8 @@
 module.exports = {
-  root: true,
-  'env': {
-    'es6': true,
-    'node': true,
-    'mocha': true,
-  },
-  'extends': 'eslint:recommended',
-  'parserOptions': {
-    'ecmaVersion': 12,
-  },
-  'globals': {
-    'document': true,
-  },
+  'extends': [
+    'eslint:recommended',
+    'plugin:vue/recommended'
+  ],
   'rules': {
     'no-prototype-builtins': 'warn',
     'no-nested-ternary': 'error',
@@ -126,12 +117,6 @@ module.exports = {
       {
         'before': false,
         'after': true,
-      },
-    ],
-    'no-unsafe-optional-chaining': [
-      'error',
-      {
-        'disallowArithmeticOperators': true,
       },
     ],
     'array-bracket-spacing': [
