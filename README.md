@@ -1,24 +1,22 @@
 # ShakeyCode
+### ShakeyCode allows you to generate and scan QR-Like codes using Shakey as a motive.
 
-## Project setup
+## Installation
 ```
 npm install
 ```
 
-### Compiles and hot-reloads for development
+### Run Development Server
 ```
 npm run serve
 ```
 
-### Compiles and minifies for production
+### Compile Production Build
 ```
 npm run build
 ```
 
-### Lints and fixes files
+### Lint and Fix Files
 ```
 npm run lint
 ```
-
-### Customize configuration
-See [Configuration Reference](https://cli.vuejs.org/config/).
