@@ -9,6 +9,8 @@
   }
 
   div.container img.icon {
+    height: 100%;
+    width: auto;
     margin: 0 24px;
   }
 
