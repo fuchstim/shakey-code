@@ -70,7 +70,7 @@
 
 <script>
 
-import { decodeV2 } from '../../scanner';
+import ShakeyCodeDecoder from '../../scanner/decode';
 
 export default {
   name: 'decoder',
@@ -85,6 +85,10 @@ export default {
     error: '',
 
     debugViews: {},
+    decoder: new ShakeyCodeDecoder({
+      // onSampleRecorded: ({ sampleProgress }) => console.log(sampleProgress),
+      onResult: console.log,
+    })
   }),
 
   methods: {
@@ -109,7 +113,7 @@ export default {
           (1000 / this.fps)
         );
 
-        this.detectCode(video)
+        this.decoder._drawDebug = (id, content) => this.drawDebug(id, content);
 
         this.isScanning = true;
       } catch(e) {
@@ -149,11 +153,12 @@ export default {
       const image = this.imageDataToBase64(scanArea);
 
       try {
-        const result = await decodeV2(image, (id, content) => this.drawDebug(id, content));
+        const result = await this.decoder.decode(image);
 
         this.result = result;
       } catch(e) {
         this.error = e.message;
+        throw e;
       }
     },
 

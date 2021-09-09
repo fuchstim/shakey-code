@@ -96,31 +96,34 @@ class ColourEncoder {
   decode(colours) {
     const bits = colours.map(c => this._findClosestBit(c));
 
-    const parityBit = bits.pop();
-    const parityBitCheck = bits.reduce((acc, b) => acc + Number(b), 0) % 3;
-    if (Number(parityBit) !== parityBitCheck) {
-      throw new Error('Failed to decode invalid data');
-    }
+    const characterBits = Array(Math.ceil(bits.length / this.charLength))
+      .fill()
+      .map((_, index) => bits.slice(index * this.charLength, (index + 1) * this.charLength))
+      .filter(c => !c.every(b => b === '0'));
 
-    const characterBits = [];
-    for (let i = 0; i < bits.length; i += this.charLength) {
-      characterBits.push(bits.slice(i, i + this.charLength));
+    const parityBit = characterBits.pop()[0];
+    const parityBitCheck = characterBits
+      .map(c => c.reduce((acc, b) => acc + Number(b), 0))
+      .reduce((acc, s) => acc + Number(s), 0);
+
+    if (Number(parityBit) !== parityBitCheck % 3) {
+      throw new Error('Failed to decode invalid data');
     }
 
     const characterCodes = characterBits.map(c => parseInt(c.join(''), 3));
 
-    // const decoded = characterCodes.map(c => {
-    //   const [ character ] = Object.entries(this.characterCodes)
-    //     .find(([ , code ]) => code === c);
+    const decoded = characterCodes.map(c => {
+      const [ character ] = Object.entries(this.characterCodes)
+        .find(([ , code ]) => code === c);
 
-    //   if (!character) {
-    //     throw new Error(`Failed to resolve character with code ${c}`);
-    //   }
+      if (!character) {
+        throw new Error(`Failed to resolve character with code ${c}`);
+      }
 
-    //   return character;
-    // }).join('');
+      return character;
+    }).join('');
 
-    return characterCodes;
+    return decoded;
   }
 
   _padCharacterCode(characterCode) {
