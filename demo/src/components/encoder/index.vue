@@ -1,4 +1,12 @@
 <style scoped>
+  h1.title {
+    margin-top: 0;
+  }
+
+  p.label {
+    margin-bottom: 2px;
+  }
+
   input {
     width: 100%
   }
@@ -6,7 +14,8 @@
   p#error {
     background-color: red;
     color: white;
-    padding: 5px;
+    padding: 12px;
+    border-radius: 10px;
   }
 
   img {
@@ -16,8 +25,10 @@
 </style>
 
 <template>
-  <div style="width: 100%">
-    <p>Input code here:</p>
+  <div>
+    <h1 class="title">Encode</h1>
+
+    <p class="label">Input code here:</p>
     <input type="text" v-model="input"/>
 
     <p id="error" v-if="error">{{ error }}</p>
@@ -39,6 +50,8 @@ export default {
     result: null,
     encoder: new ShakeyCodeEncoder()
   }),
+
+  mounted() { this.input = '' },
 
   watch: {
     input(code) {

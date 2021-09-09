@@ -5,7 +5,7 @@ import Pattern from './_pattern';
 import utils from '../utils';
 
 class ShakeyCodeDecoder {
-  constructor({ drawDebug, onSampleRecorded, onResult, sampleCount }) {
+  constructor({ drawDebug, onSampleRecorded, onResult, sampleCount } = {}) {
     this._drawDebug = drawDebug;
     this.onSampleRecorded = onSampleRecorded || (() => {});
     this.onResult = onResult || (() => {});
@@ -27,8 +27,12 @@ class ShakeyCodeDecoder {
     this.samples = [];
   }
 
-  async decode(base64InputImage) {
-    const inputImage = (await Jimp.read(Buffer.from(base64InputImage.split(',')[1], 'base64')));
+  async decode(inputData) {
+    if(!inputData.length) {
+      return;
+    }
+    
+    const inputImage = (await Jimp.read(Buffer.from(inputData, 'base64')));
 
     const tail = this._findTailPattern(inputImage);
 

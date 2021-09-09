@@ -1,70 +1,90 @@
 <style scoped>
-  div#buttons {
+  h1.title {
+    margin-top: 0;
+  }
+
+  p.label {
+    margin-bottom: 2px;
+  }
+
+  input {
+    width: 100%
+  }
+
+  p.result {
+    background-color: green;
+    color: white;
+    padding: 12px;
+    border-radius: 10px;
+  }
+
+  p.error {
+    background-color: red;
+    color: white;
+    padding: 12px;
+    border-radius: 10px;
+  }
+
+  div.preview {
+    width: 100%;
+    position: relative;
+    height: max-content;
+  }
+
+  div.preview video {
+    width: 100%;
+  }
+
+  div.preview div.viewfinder {
+    position: absolute;
+    box-shadow: inset 0px 0px 0px 5px #009fff;
+    border-radius: 5px;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%)
+  }
+
+  div.canvases {
     display: flex;
     flex-direction: row;
   }
 
-  div#canvases {
-    display: flex;
-    flex-direction: row;
+  div.canvases canvas.focus {
+    display: none;
   }
 
-  div#debugViews {
+  div.canvases div.debugViews {
     display: grid;
     grid-gap: 12px;
     grid-template-columns: auto auto auto auto auto;
   }
 
-  div#debugViews canvas {
+  div.canvases div.debugViews canvas {
     width: 160px;
     height: 160px;
-  }
-  p#result {
-    background-color: green;
-    color: white;
-  }
-
-  p#error {
-    background-color: red;
-    color: white;
   }
 </style>
 
 <template>
-  <div style="width: 100%">
-    <p>Please select a video input:</p>
+  <div>
+    <h1 class="title">Decode</h1>
 
-    <div id="buttons">
-      <!-- <button @click="() => listInputs()">Refresh inputs</button>
+    <button @click="detectCode">Run</button>
 
-      <button v-if="isScanning" @click="() => stopScan()">
-        Stop
-      </button>
+    <p class="label">Scanning... {{progress || 0}}%</p>
+    <p class="result" v-if="result">{{result}}</p>
+    <p class="error" v-if="error">{{error}}</p>
 
-      <button v-else v-for="(input, index) in videoInputs" :key="index" @click="() => startScan(input.deviceId)">
-        {{input.label}}
-      </button> -->
-
-      <button @click="startScan">
-        Start
-      </button>
-
-      <button @click="stopScan">
-        Stop
-      </button>
+    <div class="preview">
+      <div class="viewfinder" ref="viewfinder" />
+      <video autoplay playsinline ref="preview" />
     </div>
 
-    <div id="canvases">
-      <canvas ref="viewfinder" />
+    <div class="canvases">
+      <canvas class="focus" ref="focus" />
 
-      <div id="debugViews" ref="debugViews" />
+      <div class="debugViews" ref="debugViews" />
     </div>
-
-    <video autoplay loop ref="inputVideo" src="../../demo.mp4" style="display: none" />
-    <!-- <img ref="inputVideo" src="../../test.jpg" style="display: none" /> -->
-
-    <p id="result">{{result}}</p>
-    <p id="error">{{error}}</p>
   </div>
 </template>
 
@@ -76,44 +96,53 @@ export default {
   name: 'decoder',
 
   data: () => ({
-    videoInputs: [],
     stream: null,
     isScanning: false,
     fps: 5,
     scanInterval: null,
     result: '',
     error: '',
+    progress: 0,
 
     debugViews: {},
-    decoder: new ShakeyCodeDecoder({
-      // onSampleRecorded: ({ sampleProgress }) => console.log(sampleProgress),
-      onResult: console.log,
-    })
+    decoder: new ShakeyCodeDecoder()
   }),
 
+  async mounted() {
+    try {
+      this.stream = await navigator.mediaDevices.getUserMedia({ 
+        video: { 
+          facingMode: { ideal: 'environment' }
+        } 
+      });
+
+      this.decoder._drawDebug = (id, content) => this.drawDebug(id, content);
+      this.decoder.onResult = result => this.result = result;
+      this.decoder.onSampleRecorded = ({ sampleProgress }) => this.progress = sampleProgress;
+
+      this.startScan();
+    } catch(error) {
+      this.stopScan();
+
+      this.error = error.message;
+    }
+  },
+
+  beforeDestroy() {
+    this.stopScan();
+  },
+
   methods: {
-    async listInputs() {
-      const mediaDevices = navigator.mediaDevices;
-      if(!mediaDevices) { return; }
-
-      const devices = await mediaDevices.enumerateDevices();
-      this.videoInputs = devices.filter(({ kind }) => kind === 'videoinput');
-    },
-
     async startScan() {
       try {
-        // this.stream = await navigator.mediaDevices.getUserMedia({ video: { deviceId } });
-
-        const video = this.$refs.inputVideo;
-        video.play();
+        const video = this.$refs.preview;
+        video.srcObject = this.stream;
 
         this.scanInterval && clearInterval(this.scanInterval);
         this.scanInterval = setInterval(
-          () => this.detectCode(video), 
+          () => this.detectCode(), 
           (1000 / this.fps)
         );
-
-        this.decoder._drawDebug = (id, content) => this.drawDebug(id, content);
 
         this.isScanning = true;
       } catch(e) {
@@ -124,60 +153,71 @@ export default {
     stopScan() {
       this.scanInterval && clearInterval(this.scanInterval);
 
-      // this.stream.getTracks().forEach(track => track.stop());
-
-      this.$refs.inputVideo.pause();
+      this.stream.getTracks().forEach(track => track.stop());
 
       this.isScanning = false;
     },
 
-    async detectCode(video) {
-      const canvas = this.$refs.viewfinder;
+    async detectCode() {
+      const video = this.$refs.preview;
+      const focus = this.$refs.focus;
 
-      canvas.width = video.width || video.videoWidth;
-      canvas.height = video.height || video.videoHeight;
 
-      canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
-      canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+      const scanArea = this.computeScanArea({ width: video.videoWidth, height: video.videoHeight });
 
-      const viewFinder = this.computeScanArea({ width: canvas.width, height: canvas.height });
-      const scanArea = canvas.getContext('2d').getImageData(viewFinder.topCorner.x, viewFinder.topCorner.y, viewFinder.width, viewFinder.height);
+      this.updateViewfinder(scanArea)
 
-      const context = canvas.getContext('2d');
-      context.beginPath();
-      context.lineWidth = "5";
-      context.strokeStyle = "#009fff";
-      context.rect(viewFinder.topCorner.x, viewFinder.topCorner.y, viewFinder.width, viewFinder.height);
-      context.stroke();
+      focus.width = scanArea.width;
+      focus.height = scanArea.height;
 
-      const image = this.imageDataToBase64(scanArea);
+      focus.getContext('2d').clearRect(0, 0, scanArea.width, scanArea.height);
+      focus.getContext('2d').drawImage(
+        /* image = */ video,
+        /* sx = */ scanArea.x,
+        /* sy = */ scanArea.y,
+        /* sWidth = */ scanArea.width,
+        /* sHeight = */ scanArea.height,
+        /* dx = */ 0,
+        /* dy = */ 0,
+        /* dWidth = */ focus.width,
+        /* dHeight = */ focus.height,
+      );
 
       try {
-        const result = await this.decoder.decode(image);
-
-        this.result = result;
+        await this.decoder.decode(focus.toDataURL().split(',')[1]);
       } catch(e) {
         this.error = e.message;
         throw e;
       }
     },
 
-    computeScanArea({ width, height }) {
-      const scanAreaWidth = Math.min(width, height);
+    computeScanArea({ width, height, }) {
+      const scanAreaWidth = Math.max(width, height) / 2;
       const topCornerX = width === scanAreaWidth ? 0 : ((width - scanAreaWidth) / 2);
       const topCornerY = height === scanAreaWidth ? 0 : ((height - scanAreaWidth) / 2);
 
-      return { width: scanAreaWidth, height: scanAreaWidth, topCorner: { x: topCornerX, y: topCornerY } };
+      const relativeWidth = scanAreaWidth / width;
+      const relativeHeight = scanAreaWidth / height;
+
+      return { 
+        width: scanAreaWidth,
+        height: scanAreaWidth,
+        relativeWidth,
+        relativeHeight,
+        x: topCornerX,
+        y: topCornerY
+      };
     },
 
-    imageDataToBase64(imagedata) {
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d');
-      canvas.width = imagedata.width;
-      canvas.height = imagedata.height;
-      ctx.putImageData(imagedata, 0, 0);
+    updateViewfinder({ relativeWidth, relativeHeight }) {
+      const viewfinder = this.$refs.viewfinder;
+      const video = this.$refs.preview;
 
-      return canvas.toDataURL();
+      const height = video.offsetHeight * relativeHeight;
+      const width = video.offsetWidth * relativeWidth;
+
+      viewfinder.style.width = `${width}px`;
+      viewfinder.style.height = `${height}px`;
     },
 
     drawDebug(id, content) {
@@ -223,7 +263,7 @@ export default {
         );
       };
 
-      image.src = content.data;
+      image.src = content.data || content.toDataURL();
     }
   }
 }
