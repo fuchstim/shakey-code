@@ -8,7 +8,11 @@
   }
 
   input {
-    width: 100%
+    width: calc(100% - 36px);
+    border-radius: 10px;
+    border: none;
+    background-color: #f1f1f1;
+    padding: 8px 16px;
   }
 
   p#error {
@@ -36,6 +40,7 @@
     <input
       v-model="input"
       type="text"
+      autofocus
     >
 
     <p
