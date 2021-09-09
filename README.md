@@ -1,4 +1,4 @@
-# demo
+# ShakeyCode
 
 ## Project setup
 ```
