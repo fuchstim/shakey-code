@@ -39,7 +39,7 @@
 
 <template>
   <div id="app">
-    <navigation style="z-index: 1" />
+    <navigation style="position: relative; z-index: 1" />
 
     <div class="container">
       <router-view class="content" />
