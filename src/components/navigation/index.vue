@@ -2,10 +2,14 @@
   div.container {
     display: flex;
     flex-direction: row;
-    justify-content: center;
+    justify-content: left;
     width: 100%;
     background-color: #009fff;
     height: 48px;
+  }
+
+  div.container img.icon {
+    margin: 0 24px;
   }
 
   div.container div.item {
@@ -34,6 +38,10 @@
 
 <template>
   <div class="container">
+    <img
+      class="icon"
+      src="../../../public/shakey.png"
+    >
     <div
       v-for="route in routes"
       :key="route.path"

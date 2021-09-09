@@ -23,7 +23,7 @@ class ShakeyCodeEncoder {
       baseImage.setPixelColour(colour, x, y);
     });
 
-    const outputImage = new Jimp(width * 1.4, height * 1.4, Jimp.rgbaToInt(255, 255, 255, 255));
+    const outputImage = new Jimp(width * 1.4, height * 1.4, Jimp.rgbaToInt(255, 255, 255, 0));
 
     outputImage.composite(baseImage, Math.floor(width / 5), Math.floor(height / 5));
 

@@ -67,16 +67,15 @@ export default {
   }),
 
   watch: {
-    input(code) {
-      return this.encoder.encode(code)
-        .then(r => {
-          this.error = null;
-          this.result = r;
-        })
-        .catch(e => {
-          this.error = e.message;
-          this.result = null;
-        });
+    async input(code) {
+      try {
+        const result = await this.encoder.encode(code);
+        this.error = null;
+        this.result = result;
+      } catch (error) {
+        this.error = error.message;
+        this.result = null;
+      }
     },
   },
 
