@@ -5,10 +5,11 @@ const WHITE = Jimp.rgbaToInt(255, 255, 255, 255);
 class Pattern {
   constructor(options) {
     this.pattern = options.pattern;
-    this.lightDarkCutoff = options.lightDarkCutoff || Jimp.rgbaToInt(25, 25, 25, 255);
+    this.lightDarkCutoff = options.lightDarkCutoff || Jimp.rgbaToInt(20, 20, 20, 255);
     this.drawDebug = options.drawDebug;
     this.accuracy = options.accuracy || 0.5;
     this.patternMatchThreshold = options.patternMatchThreshold || this.accuracy;
+    this.minSegmentLength = options.minSegmentLength || 5;
   }
 
   findCandidates(inputImage) {
@@ -18,9 +19,9 @@ class Pattern {
     
     const candidates = this._findCandidatesWithLineSequences(lineSequences);
 
-    const candidatesWithMatchScore = candidates.map(c => ({ 
+    const candidatesWithMatchScore = candidates.map((c, index) => ({ 
       ...c,
-       matchScore: this._calculateCandidateMatchScore(outlines, c),
+       matchScore: this._calculateCandidateMatchScore(outlines, c, index),
     }));
 
     const bestCandidates = candidatesWithMatchScore
@@ -34,13 +35,14 @@ class Pattern {
 
   _findOutlines(input) {
     const outlines = input.clone();
-    outlines.scan(0, 0, outlines.bitmap.width, outlines.bitmap.height, (x, y) => {
-      if(outlines.getPixelColour(x, y) >= this.lightDarkCutoff) {
-        outlines.setPixelColour(WHITE, x, y);
-      } else {
-        outlines.setPixelColour(BLACK, x, y)
-      }
-    });
+    outlines
+      .scan(0, 0, outlines.bitmap.width, outlines.bitmap.height, (x, y) => {
+        if(outlines.getPixelColour(x, y) >= this.lightDarkCutoff) {
+          outlines.setPixelColour(WHITE, x, y);
+        } else {
+          outlines.setPixelColour(BLACK, x, y)
+        }
+      });
 
     return outlines;
   }
@@ -52,6 +54,8 @@ class Pattern {
       lineSequences[y] = [];
 
       let currentLineSegment = { 
+        x: 0,
+        y,
         value: outlines.getPixelColour(1, y) === BLACK ? 1 : 0, 
         length: 0 
       };
@@ -62,16 +66,22 @@ class Pattern {
         if(currentLineSegment.value === pixelValue) {
           currentLineSegment.length++;
         } else {
-          lineSequences[y].push(currentLineSegment);
+          if(currentLineSegment.length >= this.minSegmentLength) {
+            lineSequences[y].push(currentLineSegment);
+          }
 
-          currentLineSegment = { value: pixelValue, length: 1 }
+          currentLineSegment = { x, y, value: pixelValue, length: 1 }
         }
       }
 
-      lineSequences[y].push(currentLineSegment)
+      if(currentLineSegment.length >= this.minSegmentLength) {
+        lineSequences[y].push(currentLineSegment);
+      }
     }
 
-    return lineSequences;
+    const deduplicatedSequences = this._deduplicateSequences(lineSequences);
+
+    return deduplicatedSequences.map(s => this._calculateRelativeSegmentLengths(s));
   }
 
   _findCandidatesWithLineSequences(lineSequences) {
@@ -79,12 +89,9 @@ class Pattern {
 
     lineSequences.forEach((row, rowIndex) => {
       row.forEach((segment, segmentIndex) => {
-        const absoluteY = rowIndex + 1;
-        const absoluteX = row.slice(0, segmentIndex).reduce((acc, { length }) => acc + length, 0);
-
         const overlappingCandidate = candidates.some(({ x, y, width, height }) => {
-          const overlapX = absoluteX >= x && absoluteX <= (x + width);
-          const overlapY = absoluteY >= y && absoluteY <= (y + height);
+          const overlapX = segment.x >= x && segment.x <= (x + width);
+          const overlapY = segment.y >= y && segment.y <= (y + height);
 
           return overlapX && overlapY;
         });
@@ -109,9 +116,9 @@ class Pattern {
 
         const checkSequenceHeight = this.pattern.length * scale;
 
-        candidates.push({ 
-          x: absoluteX,
-          y: absoluteY,
+        candidates.push({
+          x: segment.x,
+          y: segment.y,
           scale,
           width: checkSequenceWidth,
           height: checkSequenceHeight,
@@ -123,9 +130,15 @@ class Pattern {
   }
 
   _calculateRelativeSegmentLengths(sequence) {
-    const baseLength = sequence
+    const segmentLengths = sequence
       .map(({ length }) => Number(length))
-      .sort((a, b) => a - b)[0];
+      .sort((a, b) => a - b);
+
+    const smallestSegmentLength = segmentLengths[0];
+    const baseLengths = segmentLengths.filter(
+      x => x >= smallestSegmentLength * this.accuracy && x <= smallestSegmentLength * (2 - this.accuracy)
+    );
+    const baseLength = baseLengths.reduce((acc, x) => acc + x, 0) / baseLengths.length;
 
     const result = sequence.map(segment => ({ 
       ...segment, 
@@ -135,9 +148,18 @@ class Pattern {
     return result;
   }
 
+  _trimSequence(sequence) {
+    return sequence.slice(
+      sequence[0].value === 0 ? 1 : 0,
+      sequence[sequence.length - 1].value === 0 ? (sequence.length - 1) : sequence.length
+    )
+  }
+
   _compareSequences(seq1, seq2) {
-    const seq1Values = seq1.map(({ value }) => value);
-    const seq2Values = seq2.map(({ value }) => value);
+    const seq1Values = this._trimSequence(seq1).map(({ value }) => value)
+
+    const seq2Values = this._trimSequence(seq2).map(({ value }) => value)
+
 
     // Check sequences have same number of segments
     if(seq1Values.length !== seq2Values.length) {
@@ -152,10 +174,8 @@ class Pattern {
     }
 
     // Check relative segment lengths are (very) similar
-    const seq1RelativeSegmentLengths = this._calculateRelativeSegmentLengths(seq1)
-      .map(({ relativeLength }) => relativeLength);
-    const seq2RelativeSegmentLengths = this._calculateRelativeSegmentLengths(seq2)
-      .map(({ relativeLength }) => relativeLength);
+    const seq1RelativeSegmentLengths = this._calculateRelativeSegmentLengths(seq1).map(({ relativeLength }) => relativeLength);
+    const seq2RelativeSegmentLengths = this._calculateRelativeSegmentLengths(seq2).map(({ relativeLength }) => relativeLength);
 
     for(let i = 0; i < seq1RelativeSegmentLengths.length; i++) {
       const l1 = seq1RelativeSegmentLengths[i];
@@ -169,21 +189,47 @@ class Pattern {
     return true;
   }
 
-  _calculateCandidateMatchScore(outlines, candidate) {
+  _deduplicateSequences(sequences) {
+    const matchCounts = [];
+    const deduplicatedSequences = sequences.reduce((acc, sequence) => {
+      if(!acc.length) {
+        matchCounts.push(0);
+        return [ sequence ];
+      }
+
+      const matchesPrevious = this._compareSequences(sequence, acc[acc.length - 1]);
+      if(matchesPrevious) {
+        matchCounts[matchCounts.length - 1] += 1;
+      } else {
+        // If this row has appeared less than 1 time, discard it
+
+        if(matchCounts[matchCounts.length - 1] < 1) {
+          acc.pop();
+          matchCounts.pop();
+        }
+
+        matchCounts.push(0);
+        acc.push(sequence);
+      }
+
+      return acc;
+    }, []);
+
+    return deduplicatedSequences;
+  }
+
+  _calculateCandidateMatchScore(outlines, candidate, index) {
     const candidateArea = outlines.clone().crop(candidate.x, candidate.y, candidate.width, candidate.height);
+
+    this.drawDebug({ [`candidateArea${index}`]: candidateArea })
 
     // Result of _getLineSequences is one-indexed, so we remove the first element
     const candidateLineSequences = this._getLineSequences(candidateArea).slice(1);
 
-    // Repeat pattern rows to (approximately) match number of candidate line sequences
-    const patternLineSequences = this.pattern.reduce((acc, row) => ([
-      ...acc,
-      ...Array(candidate.scale).fill(row)
-    ]), []);
+    const patternLineSequences = this.pattern;
 
     const rowCount = Math.min(candidateLineSequences.length, patternLineSequences.length);
 
-    console.log({ candidateLineSequences, patternLineSequences })
 
     const lineMatchResults = Array(rowCount).fill()
       .map((_, index) => {
@@ -193,8 +239,6 @@ class Pattern {
 
         return { candidateLineSequence, patternLineSequence, match };
       });
-
-    console.log({ lineMatchResults })
 
     const lineMatchScore = Math.round(
       (lineMatchResults.filter(({ match }) => match).length * 100) / lineMatchResults.length

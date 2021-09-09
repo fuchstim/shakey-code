@@ -13,21 +13,21 @@ class ShakeyCodeDecoder {
 
     await this.drawDebug({ inputImage });
 
-    const facePatternCandidates = this._findFacePatternCandidates(inputImage);
-    const face = facePatternCandidates[0];
+    // const facePatternCandidates = this._findFacePatternCandidates(inputImage);
+    // const face = facePatternCandidates[0];
     
-    if(face) {
-      this.drawDebug({
-        face: inputImage.clone().crop(face.x, face.y, face.width, face.height)
-      })
-    }
+    // if(face) {
+    //   this.drawDebug({
+    //     face: inputImage.clone().crop(face.x, face.y, face.width, face.height)
+    //   })
+    // }
 
-    const handPatternCandidates = this._findHandPatternCandidates(inputImage);
-    const hand = handPatternCandidates[0];
+    const tailPatternCandidates = this._findTailPatternCandidates(inputImage);
+    const tail = tailPatternCandidates[0];
 
-    if(hand) {
+    if(tail) {
       this.drawDebug({
-        hand: inputImage.clone().crop(hand.x, hand.y, hand.width, hand.height)
+        tail: inputImage.clone().crop(tail.x, tail.y, tail.width, tail.height)
       })
     }
   }
@@ -47,12 +47,13 @@ class ShakeyCodeDecoder {
     return results;
   }
 
-  _findHandPatternCandidates(inputImage) {
+  _findTailPatternCandidates(inputImage) {
     const facePattern = [
-      [{ length: 1, value: 1 }, { length: 2, value: 0 }, { length: 2, value: 1}],
-      [{ length: 1, value: 1 }, { length: 3, value: 0 }, { length: 1, value: 1}],
-      [{ length: 1, value: 1 }, { length: 3, value: 0 }, { length: 1, value: 1}],
-      [{ length: 1, value: 0}, { length: 4, value: 1 }],
+      [{ length: 3, value: 1 }, { length: 2, value: 0 }, { length: 1, value: 1 }, { length: 2, value: 0 }, { length: 3, value: 1 }],
+      [{ length: 1, value: 0 }, { length: 1, value: 1 }, { length: 3, value: 0 }, { length: 1, value: 1 }, { length: 3, value: 0 }, { length: 2, value: 1 }],
+      [{ length: 1, value: 0 }, { length: 1, value: 1 }, { length: 1, value: 0 }, { length: 3, value: 1 }, { length: 3, value: 0 }, { length: 2, value: 1 }],
+      [{ length: 1, value: 0 }, { length: 3, value: 1 }, { length: 2, value: 0 }, { length: 5, value: 1 }],
+      [{ length: 2, value: 0 }, { length: 1, value: 1 }, { length: 3, value: 0 }, { length: 1, value: 1 }, { length: 3, value: 0 }, { length: 1, value: 1 }],
     ];
 
     const pattern = new Pattern({ pattern: facePattern, drawDebug: s => this.drawDebug(s) });
