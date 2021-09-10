@@ -72,7 +72,7 @@ class ColourEncoder {
       const characterCode = this.characterCodes[c];
 
       if (!characterCode) {
-        throw new Error(`Cannot resolve unknown character: ${c}`);
+        throw new Error(`Cannot resolve unknown character: ${c}. Only A-Z and 0-9 are supported.`);
       }
 
       return this._padCharacterCode(characterCode.toString(3));
