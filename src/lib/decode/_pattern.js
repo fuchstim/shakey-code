@@ -26,7 +26,7 @@ class Pattern {
 
     const bestCandidates = candidatesWithMatchScore
       .filter(({ matchScore }) => matchScore >= this.patternMatchThreshold)
-      .sort((a, b) => b - a);
+      .sort((a, b) => b.matchScore - a.matchScore);
 
     return bestCandidates;
   }
