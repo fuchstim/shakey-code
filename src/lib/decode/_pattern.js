@@ -220,7 +220,6 @@ class Pattern {
   _calculateCandidateMatchScore(outlines, candidate) {
     const candidateArea = outlines.clone().crop(candidate.x, candidate.y, candidate.width, candidate.height);
 
-    // Result of _getLineSequences is one-indexed, so we remove the first element
     const candidateLineSequences = this._getLineSequences(candidateArea);
 
     const patternLineSequences = this.pattern;
